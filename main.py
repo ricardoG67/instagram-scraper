@@ -79,7 +79,9 @@ def scraping(usernames):
             for link in links:
                 post = link.get_attribute('href')
                 if '/p/' in post:
-                    posts.append(post) 
+                    html_link = link.get_attribute('innerHTML')                
+                    if 'svg' in html_link:
+                        posts.append(post) 
         ####################################
         #Esto se pone adentro del while ya que se eliminan los html 
         '''posts = []
