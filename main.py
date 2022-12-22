@@ -58,7 +58,7 @@ def scraping(usernames):
         cont = 0
         posts = []
         last_height = driver.execute_script("return document.body.scrollHeight")
-        while cont<=80: #maso mil imagenes
+        while cont<=30: #maso mil imagenes
             cont = cont + 1
             #POR LO QUE VEO SE CARGAN DE 12 EN 12 LAS IMAGENES EN INSTAGRAM
             # Scroll down to the bottom.
@@ -89,54 +89,62 @@ def scraping(usernames):
             if '/p/' in post:
                 posts.append(post)''' #Sin login son 12 imagenes
         posts = list(set(posts))
+        print(len(posts))
         ####################################
         registro_csv = pd.read_csv("instagram_scrapeado.csv")
         nuevos_registros = []
 
         #Si es carrusel, tendrá un div con class  "_9zm2"
 
-        for post in posts:
-            driver.get(post)
-            time.sleep(3)  
+        try:
+            for post in posts:
+                driver.get(post)
+                time.sleep(3)  
 
-            if len(driver.find_elements("tag name", "video")) == 0 and len(driver.find_elements(By.CLASS_NAME, '_9zm2'))==0:
-                #Lo que está aca no es ni video ni carrusel
-                url_imagen = driver.find_element(By.CLASS_NAME, 'xu96u03').get_attribute('src')
+                if len(driver.find_elements("tag name", "video")) == 0 and len(driver.find_elements(By.CLASS_NAME, '_9zm2'))==0:
+                    #Lo que está aca no es ni video ni carrusel
+                    url_imagen = driver.find_element(By.CLASS_NAME, 'xu96u03').get_attribute('src')
 
-                page = requests.get(post).content
-                soup = BeautifulSoup(page,'lxml')
-                title = soup.find('title')
-                titulo = re.findall(r'"([^"]*)"',str(title))
-                if titulo != []:
-                    cantidad_caracteres = len(titulo[0])
-                    #emoji
-                    hashtags = re.findall(r"\B#\w+\b", titulo[0])
-                    cantidad_hashtags = len(hashtags)
+                    page = requests.get(post).content
+                    soup = BeautifulSoup(page,'lxml')
+                    title = soup.find('title')
+                    titulo = re.findall(r'"([^"]*)"',str(title))
+                    if titulo != []:
+                        cantidad_caracteres = len(titulo[0])
+                        #emoji
+                        hashtags = re.findall(r"\B#\w+\b", titulo[0])
+                        cantidad_hashtags = len(hashtags)
 
-                likes = driver.find_elements(By.CLASS_NAME, '_aada')[-1].get_attribute('innerHTML')
-                cantidad_likes = int("".join(re.findall(r'\d+', likes))) #obtiene los numeros en lista, los pasa a string  y luego a int
+                    likes = driver.find_elements(By.CLASS_NAME, '_aada')[-1].get_attribute('innerHTML')
+                    cantidad_likes = int("".join(re.findall(r'\d+', likes))) #obtiene los numeros en lista, los pasa a string  y luego a int
 
-                tiempo = driver.find_element(By.TAG_NAME, 'time').get_attribute('datetime')
-                date_pattern = r"\d{4}-\d{2}-\d{2}"
-                date_match = re.search(date_pattern, tiempo)
-                fecha = date_match.group()
+                    tiempo = driver.find_element(By.TAG_NAME, 'time').get_attribute('datetime')
+                    date_pattern = r"\d{4}-\d{2}-\d{2}"
+                    date_match = re.search(date_pattern, tiempo)
+                    fecha = date_match.group()
 
-                '''print(username)
-                print(cantidad_publicaciones)
-                print(cantidad_seguidores)
-                print(cantidad_seguidos)
-                print(url_imagen)
-                print(cantidad_caracteres)
-                print(cantidad_hashtags)
-                print(fecha)
-                print(cantidad_likes)'''
+                    '''print(username)
+                    print(cantidad_publicaciones)
+                    print(cantidad_seguidores)
+                    print(cantidad_seguidos)
+                    print(url_imagen)
+                    print(cantidad_caracteres)
+                    print(cantidad_hashtags)
+                    print(fecha)
+                    print(cantidad_likes)'''
 
-                nuevos_registros.append([user, cantidad_publicaciones, cantidad_seguidores, cantidad_seguidos, url_imagen, cantidad_caracteres, cantidad_hashtags, fecha, cantidad_likes])
-        
-        df = pd.DataFrame(nuevos_registros, columns=registro_csv.columns)
+                    nuevos_registros.append([user, cantidad_publicaciones, cantidad_seguidores, cantidad_seguidos, url_imagen, cantidad_caracteres, cantidad_hashtags, fecha, cantidad_likes])
+            
+            df = pd.DataFrame(nuevos_registros, columns=registro_csv.columns)
 
-        registro_csv = pd.concat([registro_csv, df], axis=0, ignore_index=True)
-        registro_csv.to_csv("instagram_scrapeado.csv", index=False)
+            registro_csv = pd.concat([registro_csv, df], axis=0, ignore_index=True)
+            registro_csv.to_csv("instagram_scrapeado.csv", index=False)
+
+        except:
+            df = pd.DataFrame(nuevos_registros, columns=registro_csv.columns)
+
+            registro_csv = pd.concat([registro_csv, df], axis=0, ignore_index=True)
+            registro_csv.to_csv("instagram_scrapeado.csv", index=False)
 
     driver.close()  
 
