@@ -36,7 +36,7 @@ def scraping(usernames):
     username.send_keys(INSTAGRAM_USER)
     password.send_keys(INSTAGRAM_PASSWORD)
     login = driver.find_element("css selector", "button[type='submit']").click()
-    time.sleep(35)
+    time.sleep(30)
 
     for user in usernames:
         driver.get(f"https://www.instagram.com/{user}")
@@ -56,7 +56,7 @@ def scraping(usernames):
         cantidad_seguidos = int("".join(re.findall(r'\d+', seguidos)))
         ######################################            
         cont = 0
-
+        posts = []
         last_height = driver.execute_script("return document.body.scrollHeight")
         while cont<=80: #maso mil imagenes
             cont = cont + 1
@@ -74,13 +74,21 @@ def scraping(usernames):
                 break
 
             last_height = new_height
+
+            links = driver.find_elements("tag name", "a")
+            for link in links:
+                post = link.get_attribute('href')
+                if '/p/' in post:
+                    posts.append(post) 
         ####################################
-        posts = []
+        #Esto se pone adentro del while ya que se eliminan los html 
+        '''posts = []
         links = driver.find_elements("tag name", "a")
         for link in links:
             post = link.get_attribute('href')
             if '/p/' in post:
-                posts.append(post) #Sin login son 12 imagenes
+                posts.append(post)''' #Sin login son 12 imagenes
+        posts = list(set(posts))
         ####################################
         registro_csv = pd.read_csv("instagram_scrapeado.csv")
         nuevos_registros = []
@@ -138,6 +146,7 @@ def scraping(usernames):
 #https://influencermarketinghub.com/es/principales-influencers-en-instagram/
 #NO HE USADO TDV usernames = ["bellapoarch", "luisitocomunica", "instagram","cristiano","arianagrande","selenagomez","therock","kimkardashian","kyliejenner","beyonce","taylorswift"]
 #usernames = ["cristiano", "taylorswift", "selenagomez"]
-usernames = ["leomessi", "neymarjr", "kendalljenner", "justinbieber"]
+usernames = ["leomessi", "neymarjr", "kendalljenner"] #justinbieber falta
 scraping(usernames)
 
+#LO UNICO QUE FALTA ES ELIMINAR LOS REPETIDOS EN EL .CSV
