@@ -144,3 +144,4 @@ def scraping(usernames):
 #usernames = ["cristiano", "taylorswift", "selenagomez"]
 usernames = ["leomessi", "neymarjr", "kendalljenner", "justinbieber"]
 scraping(usernames)
+

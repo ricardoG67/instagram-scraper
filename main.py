@@ -1,4 +1,3 @@
-from unicodedata import name
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -21,11 +20,16 @@ load_dotenv()
 INSTAGRAM_USER = os.getenv("INSTAGRAM_USER")
 INSTAGRAM_PASSWORD = os.getenv("INSTAGRAM_PASSWORD")
 
-PATH = str(os.getcwd()) + "/chromedriver" #CUando es windows se usa .exe, sino sin .nada
-driver = webdriver.Chrome(PATH)
+#PATH = str(os.getcwd()) + "/chromedriver" #CUando es windows se usa .exe, sino sin .nada
+#PATH = str(os.getcwd()) + "\msedgedriver.exe"
+
+
+PATH = "c:/Users/User/Desktop/PIX INSTAGRAM/msedgedriver.exe"
+print("#################################",PATH)
+driver = webdriver.Edge()
 
 def scraping(usernames):
-    #ACA DEBERIA IR LOGIN PERO ME SALTO ESA PARTE
+    #ACA DEBERÍA IR LOGIN PERO ME SALTO ESA PARTE
     driver.get("https://www.instagram.com/")
     ssl._create_default_https_context = ssl._create_unverified_context
     time.sleep(3)
@@ -60,7 +64,7 @@ def scraping(usernames):
         last_height = driver.execute_script("return document.body.scrollHeight")
         while cont<=50: #maso mil imagenes es 30 
             cont = cont + 1
-            #POR LO QUE VEO SE CARGAN DE 12 EN 12 LAS IMAGENES EN INSTAGRAM
+            #POR LO QUE VEO SE CARGAN DE 12 EN 12 LAS IMÁGENES EN INSTAGRAM
             # Scroll down to the bottom.
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
