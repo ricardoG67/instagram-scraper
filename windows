@@ -1,0 +1,146 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+from bs4 import BeautifulSoup
+import urllib.request
+import requests
+import ssl
+from dotenv import load_dotenv
+import os
+import re
+import emoji
+import pandas as pd
+
+
+#https://www.youtube.com/watch?v=-3hCfDRkq9s&ab_channel=Cryproot
+
+load_dotenv()
+# Variables de entorno
+INSTAGRAM_USER = os.getenv("INSTAGRAM_USER")
+INSTAGRAM_PASSWORD = os.getenv("INSTAGRAM_PASSWORD")
+
+#PATH = str(os.getcwd()) + "/chromedriver" #CUando es windows se usa .exe, sino sin .nada
+#PATH = str(os.getcwd()) + "\msedgedriver.exe"
+
+
+PATH = "c:/Users/User/Desktop/PIX INSTAGRAM/msedgedriver.exe"
+print("#################################",PATH)
+driver = webdriver.Edge()
+
+def scraping(usernames):
+    #ACA DEBERÍA IR LOGIN PERO ME SALTO ESA PARTE
+    driver.get("https://www.instagram.com/")
+    ssl._create_default_https_context = ssl._create_unverified_context
+    time.sleep(3)
+    username = driver.find_element("css selector", "input[name='username']")
+    password = driver.find_element("css selector", "input[name='password']")
+    username.clear()
+    password.clear()
+    username.send_keys(INSTAGRAM_USER)
+    password.send_keys(INSTAGRAM_PASSWORD)
+    login = driver.find_element("css selector", "button[type='submit']").click()
+    time.sleep(35)
+
+    for user in usernames:
+        driver.get(f"https://www.instagram.com/{user}")
+
+        time.sleep(5)
+
+        #######################################
+        informacion_usuario = driver.find_elements(By.CLASS_NAME, '_ac2a')
+        #publicaciones 0, seguidores 1, seguidos 2
+        publis = informacion_usuario[0].get_attribute('innerHTML')
+        cantidad_publicaciones = int("".join(re.findall(r'\d+', publis)))
+
+        seguidores = informacion_usuario[1].get_attribute('title')
+        cantidad_seguidores = int("".join(re.findall(r'\d+', seguidores)))
+
+        seguidos = informacion_usuario[2].get_attribute('innerHTML')
+        cantidad_seguidos = int("".join(re.findall(r'\d+', seguidos)))
+        ######################################            
+        cont = 0
+
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        while cont<=80: #maso mil imágenes
+            cont = cont + 1
+            #POR LO QUE VEO SE CARGAN DE 12 EN 12 LAS IMÁGENES EN INSTAGRAM
+            # Scroll down to the bottom.
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+            # Wait to load the page.
+            time.sleep(3)
+
+            # Calculate new scroll height and compare with last scroll height.
+            new_height = driver.execute_script("return document.body.scrollHeight")
+
+            if new_height == last_height:
+                break
+
+            last_height = new_height
+        ####################################
+        posts = []
+        links = driver.find_elements("tag name", "a")
+        for link in links:
+            post = link.get_attribute('href')
+            if '/p/' in post:
+                posts.append(post) #Sin login son 12 imágenes
+        ####################################
+        registro_csv = pd.read_csv("instagram_scrapeado.csv")
+        nuevos_registros = []
+
+        #Si es carrusel, tendrá un div con class  "_9zm2"
+
+        for post in posts:
+            driver.get(post)
+            time.sleep(3)  
+
+            if len(driver.find_elements("tag name", "video")) == 0 and len(driver.find_elements(By.CLASS_NAME, '_9zm2'))==0:
+                #Lo que está aca no es ni video ni carrusel
+                url_imagen = driver.find_element(By.CLASS_NAME, 'xu96u03').get_attribute('src')
+
+                page = requests.get(post).content
+                soup = BeautifulSoup(page,'lxml')
+                title = soup.find('title')
+                titulo = re.findall(r'"([^"]*)"',str(title))
+                if titulo != []:
+                    cantidad_caracteres = len(titulo[0])
+                    #emoji
+                    hashtags = re.findall(r"\B#\w+\b", titulo[0])
+                    cantidad_hashtags = len(hashtags)
+
+                likes = driver.find_elements(By.CLASS_NAME, '_aada')[-1].get_attribute('innerHTML')
+                cantidad_likes = int("".join(re.findall(r'\d+', likes))) #obtiene los numeros en lista, los pasa a string  y luego a int
+
+                tiempo = driver.find_element(By.TAG_NAME, 'time').get_attribute('datetime')
+                date_pattern = r"\d{4}-\d{2}-\d{2}"
+                date_match = re.search(date_pattern, tiempo)
+                fecha = date_match.group()
+
+                '''print(username)
+                print(cantidad_publicaciones)
+                print(cantidad_seguidores)
+                print(cantidad_seguidos)
+                print(url_imagen)
+                print(cantidad_caracteres)
+                print(cantidad_hashtags)
+                print(fecha)
+                print(cantidad_likes)'''
+
+                nuevos_registros.append([user, cantidad_publicaciones, cantidad_seguidores, cantidad_seguidos, url_imagen, cantidad_caracteres, cantidad_hashtags, fecha, cantidad_likes])
+        
+        df = pd.DataFrame(nuevos_registros, columns=registro_csv.columns)
+
+        registro_csv = pd.concat([registro_csv, df], axis=0, ignore_index=True)
+        registro_csv.to_csv("instagram_scrapeado.csv", index=False)
+
+    driver.close()  
+
+#Recordar para entrenamiento no sirve ni username ni url
+#falta implementar para eliminar registros repetidos
+
+#https://influencermarketinghub.com/es/principales-influencers-en-instagram/
+#NO HE USADO TDV usernames = ["bellapoarch", "luisitocomunica", "instagram","cristiano","arianagrande","selenagomez","therock","kimkardashian","kyliejenner","beyonce","taylorswift"]
+#usernames = ["cristiano", "taylorswift", "selenagomez"]
+usernames = ["leomessi", "neymarjr", "kendalljenner", "justinbieber"]
+scraping(usernames)
