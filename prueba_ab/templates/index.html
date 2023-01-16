@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+        }
+        .centrar{
+            display: grid;
+            place-items: center;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="centrar">
+        <div>
+            <h1>Coloque las imagenes:</h1>
+            <form action="/analisis" method="post" enctype="multipart/form-data">
+                <input type="file" id="img" name="img" accept="image/*" required onchange="PreviewImage();" >
+                <img id="uploadPreview" width="200px" />
+                <img id="output" width="200px"/>
+                <input type="file" id="img2" name="img2" accept="image/*" required onchange="loadFile(event);" >
+                <input type="submit" value="Enviar">
+            </form>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {%for message in messages%}
+                    <p>{{message}}</p>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <script type="text/javascript">
+
+        function PreviewImage() {
+            var oFReader = new FileReader();
+            oFReader.readAsDataURL(document.getElementById("img").files[0]);
+    
+            oFReader.onload = function (oFREvent) {
+                document.getElementById("uploadPreview").src = oFREvent.target.result;
+            };
+        };
+    
+        var loadFile = function(event) {
+            var image = document.getElementById('output');
+            image.src = URL.createObjectURL(event.target.files[0]);
+        };
+    </script>
+</body>
+</html>
